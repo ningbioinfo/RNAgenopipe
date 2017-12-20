@@ -64,7 +64,7 @@ for DIRECTORY in ${TOMAKEDI}
 
 
 ## Data files
-GATK_ref=${REFs}/Homo_sapiens_assembly38.fasta
+#GATK_ref=${REFs}/Homo_sapiens_assembly38.fasta
 Annotation_gtf=${REFs}/hg38_annotation.gtf
 xenoRefFlat=${REFs}/hg38_xenoRefFlat.txt
 
