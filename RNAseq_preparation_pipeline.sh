@@ -55,7 +55,7 @@ fi
 
 
 ## making directory if not exist
-for DIRECTORY in TOMAKEDI
+for DIRECTORY in ${TOMAKEDI}
   do
     python3 ${DS} ${DIRECTORY}
   done
