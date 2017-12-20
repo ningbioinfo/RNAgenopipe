@@ -29,7 +29,7 @@ DATA=/fast/users/a1692215/RNA-seq_Montgomery/raw_data/
 REFs=/fast/users/a1692215/RNA-seq_Montgomery/Ref/
 MAPREF=${REFs}/STAR_index/
 OUTPUT=/fast/users/a1692215/RNA-seq_Montgomery/OUTPUT/
-SCRIPTS=$(pwd)
+ROOT=$(pwd)
 
 
 TRIMDATA=${OUTPUT}/trimmed_data
@@ -43,12 +43,12 @@ ADDREADG=${OUTPUT}/after_mapping/AddOrReplaceReadGroups
 FASTQC1=${DATA}/fastqc
 FASTQC2=${TRIMDATA}/fastqc
 
-TOMAKEDI=(${TRIMDATA} ${ALIGNDATA} ${MDDATA} ${EXPLEVEL} ${RNA_METRICS} ${IS_METRICS} ${SPLITNCIGAR} ${ADDREADG} ${FASTQC1} ${FASTQC2})
+TOMAKEDI=(${OUTPUT} ${TRIMDATA} ${ALIGNDATA} ${MDDATA} ${EXPLEVEL} ${RNA_METRICS} ${IS_METRICS} ${SPLITNCIGAR} ${ADDREADG} ${FASTQC1} ${FASTQC2})
 
 ## Additional python scripts
-if [ -e ${SCRIPTS}/Directories_security.py ]
+if [ -e ${ROOT}/Directories_security.py ]
 then
-    DS=${SCRIPTS}/Directories_security.py
+    DS=${ROOT}/Directories_security.py
 else
     echo "There is no directories_security scripts in the location."
 fi
