@@ -4,8 +4,8 @@
 #SBATCH -n 16
 #SBATCH --time=36:00:00
 #SBATCH --mem=32GB
-#SBATCH -o /way/to/the/out/logfile
-#SBATCH -e /way/to/the/err/logfile
+#SBATCH -o /fast/users/a1692215/RNA-seq_Montgomery/out.log
+#SBATCH -e /fast/users/a1692215/RNA-seq_Montgomery/err.log
 #SBATCH --mail-type=END
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=ning.liu@student.adelaide.edu.au
@@ -22,7 +22,8 @@ module load R/3.4.2-foss-2016b
 #module load GATK
 module load Python/3.6.1-foss-2016b
 
-
+## goto working directory
+cd /fast/users/a1692215/RNA-seq_Montgomery/
 
 ## Directories
 DATA=/fast/users/a1692215/RNA-seq_Montgomery/raw_data/
