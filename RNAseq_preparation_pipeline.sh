@@ -14,12 +14,12 @@
 
 ## Modules
 module load fastqc
-module load AdapterRemoval/2.2.0-foss-2016uofa
+module load AdapterRemoval
 module load STAR
 module load picard/2.2.4-Java-1.8.0_71
 module load Subread
 module load R/3.4.2-foss-2016b
-moeule load GATK
+#module load GATK
 module load Python/3.6.1-foss-2016b
 
 
