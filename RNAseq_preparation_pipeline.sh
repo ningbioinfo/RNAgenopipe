@@ -3,7 +3,7 @@
 #SBATCH -N 1
 #SBATCH -n 16
 #SBATCH --time=36:00:00
-#SBATCH --mem=32GB
+#SBATCH --mem=100GB
 #SBATCH -o /fast/users/a1692215/RNA-seq_Montgomery/out.log
 #SBATCH -e /fast/users/a1692215/RNA-seq_Montgomery/err.log
 #SBATCH --mail-type=END
@@ -26,10 +26,10 @@ module load Python/3.6.1-foss-2016b
 cd /fast/users/a1692215/RNA-seq_Montgomery/
 
 ## Directories
-DATA=/fast/users/a1692215/RNA-seq_Montgomery/raw_data/
-REFs=/fast/users/a1692215/RNA-seq_Montgomery/Ref/
-MAPREF=${REFs}/STAR_index/
-OUTPUT=/fast/users/a1692215/RNA-seq_Montgomery/OUTPUT/
+DATA=/fast/users/a1692215/RNA-seq_Montgomery/raw_data
+REFs=/fast/users/a1692215/RNA-seq_Montgomery/Ref
+MAPREF=${REFs}/STAR_index
+OUTPUT=/fast/users/a1692215/RNA-seq_Montgomery/OUTPUT
 ROOT=$(pwd)
 
 
@@ -44,7 +44,8 @@ ADDREADG=${OUTPUT}/after_mapping/AddOrReplaceReadGroups
 FASTQC1=${DATA}/fastqc
 FASTQC2=${TRIMDATA}/fastqc
 
-TOMAKEDI=(${OUTPUT} ${TRIMDATA} ${ALIGNDATA} ${MDDATA} ${EXPLEVEL} ${RNA_METRICS} ${IS_METRICS} ${SPLITNCIGAR} ${ADDREADG} ${FASTQC1} ${FASTQC2})
+## make array of directories to make
+declare -a arr=(${OUTPUT} ${TRIMDATA} ${ALIGNDATA} ${MDDATA} ${EXPLEVEL} ${RNA_METRICS} ${IS_METRICS} ${SPLITNCIGAR} ${ADDREADG} ${FASTQC1} ${FASTQC2})
 
 ## Additional python scripts
 if [ -e ${ROOT}/Directories_security.py ]
@@ -56,7 +57,7 @@ fi
 
 
 ## making directory if not exist
-for DIRECTORY in ${TOMAKEDI}
+for DIRECTORY in "${arr[@]}"
   do
     python3 ${DS} ${DIRECTORY}
   done
@@ -88,7 +89,7 @@ for FQGZ in ${DATA}/*_1.fastq.gz
 		Basename=$(basename ${FQGZ} _1.fastq.gz)
 
 		AdapterRemoval --file1 ${FQGZ} --file2 ${FQGZ/_1/_2} \
-    --basename ${Basename} \
+    --basename ${TRIMDATA}/${Basename} \
     --trimns \
     --trimqualities \
     --collapse \
