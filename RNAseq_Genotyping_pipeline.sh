@@ -29,7 +29,7 @@ module load Python/3.6.1-foss-2016b
 
 ## required directories and files
 MAPREF=/fast/users/a1692215/RNA-seq_Montgomery/Ref/STAR_index #mapping index
-
+SCRIPTS=/fast/users/a1692215/RNA-seq_Montgomery/
 
 
 ## Dirctories to make
@@ -55,9 +55,9 @@ declare -a arr=(${OUTPUT} ${TRIMDATA} ${ALIGNDATA} ${RGDATA} ${MDDATA} ${SPDATA}
                 ${GENOTYPING} ${VARFILTER} ${VAREVAL} ${ASEREADCOUNTER})
 
 ## Additional python scripts
-if [ -e ${ROOT}/Directories_security.py ]
+if [ -e ${SCRIPTS}/Directories_security.py ]
 then
-    DS=${ROOT}/Directories_security.py
+    DS=${SCRIPTS}/Directories_security.py
 else
     echo "There is no directories_security scripts in the location."
 fi
