@@ -24,7 +24,7 @@ import logging
 ################################################################################################
 ################################################################################################
 '''
-Fastqc is sometimes funny in differenet platform so we don't implement it in the pipeline.
+Fastqc is sometimes funny in differenet platform, so we don't implement it in the pipeline.
 '''
 
 
