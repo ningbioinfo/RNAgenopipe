@@ -222,7 +222,7 @@ args = vars(parser.parse_args())
 ## Directories
 ##--------------------------------------------------------------------------------------------##
 
-print('Start setting up the output directories.')
+print('Start setting up the output directories.','\n')
 
 OUTPUT = args['out']
 TRIMDATA = OUTPUT+'/Trimmed_data'
@@ -258,10 +258,10 @@ elif data1.endswith('_R1.fastq.gz'):
     data2 = data1.rstrip(data1.split('/')[-1]) + name + '_R2.fastq.gz'
 
 else:
-    print('Please use the standard file name of raw data (e.g. either *_R1.fastq.gz or *_1.fastq.gz)')
+    print('Please use the standard file name of raw data (e.g. either *_R1.fastq.gz or *_1.fastq.gz)','\n')
 
 
-print('The sample name is :', name)
+print('The sample name is :', name, '\n')
 
 annotation = args['annotation']
 dbsnp = args['dbsnp']
@@ -278,28 +278,30 @@ num_threads = args['threads'] ## number of threads to run
 
 ################## checking dependencies ##################
 
+print('Checking dependencies....','\n')
+
 try:
-    subprocess.Popen(['AdapterRemoval','-h'])
+    subprocess.Popen(['AdapterRemoval','-version'],stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 except:
     print('AdapterRemoval has not been installed.')
     sys.exit(1)
 try:
-    subprocess.Popen(['STAR','-h'])
+    subprocess.Popen(['STAR','-h','|','grep','^versionSTAR'],stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 except:
     print('STAR has not been installed.')
     sys.exit(1)
 try:
-    subprocess.Popen(['java','-jar',args['picard'],'-h'])
+    subprocess.Popen(['java','-jar',args['picard'],'-h'],stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 except:
     print('picard has not been detected.')
     sys.exit(1)
 try:
-    subprocess.Popen([args['GATK'],'-h'])
+    subprocess.Popen([args['GATK'],'-h'],stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 except:
     print('GATK has not been installed.')
     sys.exit(1)
 
-
+print('Finished checking dependencies.','\n')
 
 ################################################################################################
 ################################################################################################
@@ -324,7 +326,7 @@ logging.basicConfig(format='%(asctime)s %(message)s', filename='%d-RNAseq-pipeli
 ##--------------------------------------------------------------------------------------------##
 ## Trimming sequencing adapters off raw data and fastqc on trimmed data
 ##--------------------------------------------------------------------------------------------##
-print('Starting to trim raw data')
+print('Starting to trim raw data','\n')
 
 trimming(data1,data2,name,TRIMDATA)
 
@@ -334,31 +336,31 @@ trimdata2 = glob.glob(TRIMDATA + '/' + name + '.pair2.truncated.gz')[0]
 #fastqc(trimdata1, FASTQC2)
 #fastqc(trimdata2, FASTQC2)
 
-print('Finished trimming, so far so good, the results are in', TRIMDATA)
+print('Finished trimming, so far so good, the results are in', TRIMDATA,'\n')
 
 ##--------------------------------------------------------------------------------------------##
 ## Aligning trimmed data to reference genome
 ##--------------------------------------------------------------------------------------------##
 
-print('Starting to alignment')
+print('Starting to alignment','\n')
 
 star(trimdata1,trimdata2,ALIGNDATA + '/' + name + '_',mapref)
 
 aligndata = glob.glob(ALIGNDATA + '/' + name + '_Aligned.sortedByCoord.out.bam')[0]
 
-print('Finished alignment, hopefully nothing went wrong, the results are in', ALIGNDATA)
+print('Finished alignment, hopefully nothing went wrong, the results are in', ALIGNDATA,'\n')
 
 ##--------------------------------------------------------------------------------------------##
 ## AddOrReplaceReadGroups
 ##--------------------------------------------------------------------------------------------##
 
-print('Starting to add read group to bam files')
+print('Starting to add read group to bam files','\n')
 
 addreadgroups(aligndata,RGDATA,name,args['picard'])
 
 rgdata = glob.glob(RGDATA + '/' + name + '.rg.bam')[0]
 
-print('Finished adding the read groups, it is reuired for lots of the downstream analysis, the results are in', RGDATA)
+print('Finished adding the read groups, it is reuired for lots of the downstream analysis, the results are in', RGDATA,'\n')
 
 ##--------------------------------------------------------------------------------------------##
 ## MarkDuplicates
@@ -370,28 +372,28 @@ markduplicates(rgdata,MDDATA,name,args['picard'])
 
 mddata = glob.glob(MDDATA + '/' + name + '.markdup.bam')[0]
 
-print('Finished marking the duplicates, hate the duplicates, the results are in', MDDATA)
+print('Finished marking the duplicates, hate the duplicates, the results are in', MDDATA,'\n')
 
 ##--------------------------------------------------------------------------------------------##
 ## SplitNCigarReads
 ##--------------------------------------------------------------------------------------------##
 
-print('Starting to splitncigar')
+print('Starting to splitncigar','\n')
 
 splitncigar(mddata,ref,SPDATA,name,args['GATK'])
 
 spdata = glob.glob(SPDATA + '/' + name + '.markdup.split.bam')[0]
 
-print('Finished splitncigar, it is recommended in the best practise tho, the results are in', SPDATA)
+print('Finished splitncigar, it is recommended in the best practise tho, the results are in', SPDATA,'\n')
 
 ##--------------------------------------------------------------------------------------------##
 ## featureCounts
 ##--------------------------------------------------------------------------------------------##
-print('Starting to calculate expression level')
+print('Starting to calculate expression level','\n')
 
 featurecount(annotation,EXPLEVEL,name,spdata)
 
-print('Finished calculate the expression level, featureCounts is better than htseq-count, the results are in', EXPLEVEL)
+print('Finished calculate the expression level, featureCounts is better than htseq-count, the results are in', EXPLEVEL,'\n')
 
 ################################################################################################
 ################################################################################################
@@ -402,31 +404,31 @@ print('Finished calculate the expression level, featureCounts is better than hts
 ################################################################################################
 
 if args['genotypemode']==1:
-    print('OK now you choose the genotype mode, it will start to do the genotyping steps.')
+    print('OK now you choose the genotype mode, it will start to do the genotyping steps.','\n')
 
 
 ##--------------------------------------------------------------------------------------------##
 ## HaplotypeCaller
 ##--------------------------------------------------------------------------------------------##
-    print('Starting to call genotype')
+    print('Starting to call genotype','\n')
 
     haplotypecaller(spdata,ref,GENOTYPING,dbsnp,name,args['GATK'])
 
     genotype = glob.glob(GENOTYPING + '/' + name + '.markdup.split.vcf.gz')[0]
 
-    print('Finished calling the genotype from RNAseq data, well done, the results are in', GENOTYPING)
+    print('Finished calling the genotype from RNAseq data, well done, the results are in', GENOTYPING,'\n')
 
 ##--------------------------------------------------------------------------------------------##
 ## VariantFiltration
 ##--------------------------------------------------------------------------------------------##
 
-    print('Starting to filter genotype')
+    print('Starting to filter genotype','\n')
 
     genotypefilter(genotype,ref,VARFILTER,name,args['GATK'])
 
     filteredgenotype = glob.glob(VARFILTER + '/' + name + '.markdup.split.filtered.vcf.gz')[0]
 
-    print('Finished setting filters in the vcf, just cannot trust the data without filters, the results are in', VARFILTER)
+    print('Finished setting filters in the vcf, just cannot trust the data without filters, the results are in', VARFILTER,'\n')
 
 ##--------------------------------------------------------------------------------------------##
 ## VariantEval
@@ -438,23 +440,23 @@ if args['genotypemode']==1:
 ## SelectVariant
 ##--------------------------------------------------------------------------------------------##
 
-    print('Starting to restrict to bialleic')
+    print('Starting to restrict to bialleic','\n')
 
     selctvaiant(filteredgenotype,ref,VARFILTER,name,args['GATK'])
 
     bialleicvcf = glob.glob(VARFILTER + '/' + name + '.markdup.split.filtered.biallelic.vcf.gz')[0]
 
-    print('Finsished restrict variant to bialleic because it is required for ASE analysis, the results are in', VARFILTER)
+    print('Finsished restrict variant to bialleic because it is required for ASE analysis, the results are in', VARFILTER,'\n')
 
 
 ##--------------------------------------------------------------------------------------------##
 ## ASEReadCounter
 ##--------------------------------------------------------------------------------------------##
-    print('Starting to do ASE analysis')
+    print('Starting to do ASE analysis','\n')
 
     allelespecificexpression(mddata,bialleicvcf,ref,ASEREADCOUNTER,name,args['GATK'])
 
-    print('Finally! Finished the allele specific analysis, farewell bro, the results are in', ASEREADCOUNTER)
+    print('Finally! Finished the allele specific analysis, farewell bro, the results are in', ASEREADCOUNTER,'\n')
 
 else:
-    print('Since you did not use the genotype mode, your analysis is finished now!')
+    print('Since you did not use the genotype mode, your analysis is finished now!','\n')
