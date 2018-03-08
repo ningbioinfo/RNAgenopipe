@@ -106,6 +106,11 @@ module load Python/3.6.1-foss-2016b
 
 6. the annotation file can be downloaded at Gencode : <https://www.gencodegenes.org/>
 
+# Output of the pipeline
+
+1. A folder('Pipeline-output' is the name by default), including lots of folders
+2. A log file named after the sample name
+
 # Need to do
 
 1. The following phasing steps
