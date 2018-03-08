@@ -167,7 +167,7 @@ def genotypefilter(data,ref,outdir,name,gatk):
 ##--------------------------------------------------------------------------------------------##
 
 def selctvaiant(data,ref,outdir,name,gatk):
-    commandline = gatk + ' SelectVariants -R ' + ref + ' -V ' + data + ' --out ' + outdir + '/' + name + '.markdup.split.filtered.biallelic.vcf.gz --select-type-to-include SNP --restrict-alleles-to BIALLELIC'
+    commandline = gatk + ' SelectVariants -R ' + ref + ' -V ' + data + ' --output ' + outdir + '/' + name + '.markdup.split.filtered.biallelic.vcf.gz --select-type-to-include SNP --restrict-alleles-to BIALLELIC'
 
     commands = shlex.split(commandline)
 
