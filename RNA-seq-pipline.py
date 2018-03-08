@@ -1,4 +1,4 @@
-## Author: Ning Lin
+## Author: Ning Liu
 ## Version: 0.1.0 beta
 
 import sys
