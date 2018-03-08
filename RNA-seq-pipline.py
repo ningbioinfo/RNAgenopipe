@@ -1,19 +1,12 @@
-## tools dependencies: fastqc, AdapterRemoval, STAR, picard, Subread, GATK.
+## Author: Ning Lin
+## Version: 0.1.0 beta
+
 import sys
 import pathlib
 import argparse
 import shlex, subprocess
 import glob
 import logging
-
-
-################## checking dependencies ##################
-
-
-
-
-
-
 
 
 ################################################################################################
@@ -169,6 +162,20 @@ def genotypefilter(data,ref,outdir,name,gatk):
 #    commands = shlex.split(commandline)
 #    p = subprocess.Popen(commands)
 
+##--------------------------------------------------------------------------------------------##
+## SelectVariant
+##--------------------------------------------------------------------------------------------##
+
+def selctvaiant(data,ref,outdir,name,gatk):
+    commandline = gatk + ' SelectVariant -R ' + ref + ' -V ' + data + ' --out ' + outdir + '/' + name + '.markdup.split.filtered.biallelic.vcf.gz --select-type-to-include SNP --restrict-alleles-to BIALLELIC'
+
+    commands = shlex.split(commandline)
+
+    process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    outlog, errlog = process.communicate()
+
+    logging.info(outlog.decode("utf-8"))
+
 
 ##--------------------------------------------------------------------------------------------##
 ## ASEReadCounter
@@ -197,6 +204,7 @@ parser.add_argument('-annotation', nargs='?', help='path to annotation file in g
 parser.add_argument('-out', default='Pipeline-output', help='The output directory, by default it is ./Pipeline-output')
 parser.add_argument('-ref', nargs='?', help='reference genome to use, please download from the GATK resource bundle, should including a .fasta file, a .fai file and a .dict file, please unzip them')
 parser.add_argument('-mapref', nargs='?', help='alignment index, please use STAR to make the index, should be generated from the -ref file')
+parser.add_argument('-genotypemode', default=1, help='by default, the genotype mode is on, meaning the script will require "-dbsnp" option to be specified, if you want to turn off this mode and just use this script to do simple RNA-seq analysis, speicify this option to anything but 1')
 parser.add_argument('-dbsnp', nargs='?', help='the dbsnp file download from GATK resource bundle, please unzip')
 parser.add_argument('-picard', nargs='?', help='where is the picard.jar')
 parser.add_argument('-GATK', default='gatk', help='If you have executable gatk globally, levave it as default, otherwise please specify the code to execute gatk (e.g. "path/to/gatk")')
@@ -266,6 +274,33 @@ mapref = args['mapref']
 
 num_threads = args['threads'] ## number of threads to run
 
+
+
+################## checking dependencies ##################
+
+try:
+    subprocess.Popen(['AdapterRemoval','-h'])
+except:
+    print('AdapterRemoval has not been installed.')
+    sys.exit(1)
+try:
+    subprocess.Popen(['STAR','-h'])
+except:
+    print('STAR has not been installed.')
+    sys.exit(1)
+try:
+    subprocess.Popen(['java','-jar',args['picard'],'-h'])
+except:
+    print('picard has not been detected.')
+    sys.exit(1)
+try:
+    subprocess.Popen([args['GATK'],'-h'])
+except:
+    print('GATK has not been installed.')
+    sys.exit(1)
+
+
+
 ################################################################################################
 ################################################################################################
 ##--------------------------------------------------------------------------------------------##
@@ -274,7 +309,7 @@ num_threads = args['threads'] ## number of threads to run
 ################################################################################################
 ################################################################################################
 
-logging.basicConfig(format='%(asctime)s %(message)s', filename="\"name\"-RNAseq-pipeline.log", level=logging.INFO)
+logging.basicConfig(format='%(asctime)s %(message)s', filename='%d-RNAseq-pipeline.log' % name, level=logging.INFO)
 
 ##--------------------------------------------------------------------------------------------##
 ## Fastqc on raw data
@@ -366,28 +401,32 @@ print('Finished calculate the expression level, featureCounts is better than hts
 ################################################################################################
 ################################################################################################
 
+if args['genotypemode']==1:
+    print('OK now you choose the genotype mode, it will start to do the genotyping steps.')
+
+
 ##--------------------------------------------------------------------------------------------##
 ## HaplotypeCaller
 ##--------------------------------------------------------------------------------------------##
-print('Starting to call genotype')
+    print('Starting to call genotype')
 
-haplotypecaller(spdata,ref,GENOTYPING,dbsnp,name,args['GATK'])
+    haplotypecaller(spdata,ref,GENOTYPING,dbsnp,name,args['GATK'])
 
-genotype = glob.glob(GENOTYPING + '/' + name + '.markdup.split.vcf.gz')[0]
+    genotype = glob.glob(GENOTYPING + '/' + name + '.markdup.split.vcf.gz')[0]
 
-print('Finished calling the genotype from RNAseq data, well done, the results are in', GENOTYPING)
+    print('Finished calling the genotype from RNAseq data, well done, the results are in', GENOTYPING)
 
 ##--------------------------------------------------------------------------------------------##
 ## VariantFiltration
 ##--------------------------------------------------------------------------------------------##
 
-print('Starting to filter genotype')
+    print('Starting to filter genotype')
 
-genotypefilter(genotype,ref,VARFILTER,name,args['GATK'])
+    genotypefilter(genotype,ref,VARFILTER,name,args['GATK'])
 
-filteredgenotype = glob.glob(VARFILTER + '/' + name + '.markdup.split.filtered.vcf.gz')[0]
+    filteredgenotype = glob.glob(VARFILTER + '/' + name + '.markdup.split.filtered.vcf.gz')[0]
 
-print('Finished setting filters in the vcf, just cannot trust the data without filters, the results are in', VARFILTER)
+    print('Finished setting filters in the vcf, just cannot trust the data without filters, the results are in', VARFILTER)
 
 ##--------------------------------------------------------------------------------------------##
 ## VariantEval
@@ -395,12 +434,27 @@ print('Finished setting filters in the vcf, just cannot trust the data without f
 
 #varianteval(filteredgenotype,ref,dbsnp,VAREVAL,name,args['GATK'])
 
+##--------------------------------------------------------------------------------------------##
+## SelectVariant
+##--------------------------------------------------------------------------------------------##
+
+    print('Starting to restrict to bialleic')
+
+    selctvaiant(filteredgenotype,ref,VARFILTER,name,args['GATK'])
+
+    bialleicvcf = glob.glob(VARFILTER + '/' + name + '.markdup.split.filtered.biallelic.vcf.gz')[0]
+
+    print('Finsished restrict variant to bialleic because it is required for ASE analysis, the results are in', VARFILTER)
+
 
 ##--------------------------------------------------------------------------------------------##
 ## ASEReadCounter
 ##--------------------------------------------------------------------------------------------##
-print('Starting to do ASE analysis')
+    print('Starting to do ASE analysis')
 
-allelespecificexpression(mddata,filteredgenotype,ref,ASEREADCOUNTER,name,args['GATK'])
+    allelespecificexpression(mddata,bialleicvcf,ref,ASEREADCOUNTER,name,args['GATK'])
 
-print('Finally! Finished the allele specific analysis, farewell bro, the results are in', ASEREADCOUNTER)
+    print('Finally! Finished the allele specific analysis, farewell bro, the results are in', ASEREADCOUNTER)
+
+else:
+    print('Since you did not use the genotype mode, your analysis is finished now!')
