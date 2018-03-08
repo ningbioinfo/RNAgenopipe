@@ -17,24 +17,24 @@
   To install STAR: **Linux**
 
   ```
-   git clone https://github.com/alexdobin/STAR.git
-   cd STAR/source
+  git clone https://github.com/alexdobin/STAR.git
+  cd STAR/source
 
-   # Build STAR
-   make STAR
+  # Build STAR
+  make STAR
   ```
 
   **Mac**
 
   ```
-   git clone https://github.com/alexdobin/STAR.git
-   cd STAR/source
+  git clone https://github.com/alexdobin/STAR.git
+  cd STAR/source
 
-   # Build STAR
-   make STARforMacStatic
+  # Build STAR
+  make STARforMacStatic
   ```
 
-1. picard
+3. picard
 
   - <https://broadinstitute.github.io/picard/>
 
@@ -45,7 +45,7 @@
   - make sure you have Java, to test: `java -version`, otherwise go <http://www.oracle.com/technetwork/java/javase/downloads/index.html> to download Java
   - test the picard tool by `java -jar path/to/picard.jar -h`, you should see the manual of picard
 
-1. GATK (>4.0)
+4. GATK (>4.0)
 
   - <https://software.broadinstitute.org/gatk/download/>
 
@@ -88,3 +88,8 @@ module load Python/3.6.1-foss-2016b
     - Allele specific expression analysis **To disable the second stage, specific the argument '-genotypemode'**
 
 2. To see the manual and run the script properly, see `python RNA-seq-pipeline.py -h`
+
+# Need to do
+
+1. The following phasing steps
+2. The eqtl preparations

@@ -311,7 +311,7 @@ print('Finished checking dependencies.','\n')
 ################################################################################################
 ################################################################################################
 
-logging.basicConfig(format='%(asctime)s %(message)s', filename='%d-RNAseq-pipeline.log' % name, level=logging.INFO)
+logging.basicConfig(format='%(asctime)s %(message)s', filename='%s-RNAseq-pipeline.log' % name, level=logging.INFO)
 
 ##--------------------------------------------------------------------------------------------##
 ## Fastqc on raw data
