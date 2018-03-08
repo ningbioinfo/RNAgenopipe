@@ -94,9 +94,9 @@ module load Python/3.6.1-foss-2016b
 1. RNA-seq fastq file (preferred name : `*_R1.fastq.gz` or `*_1.fastq.gz`)
 2. Reference genome, including:
 
-  1. .fasta file
-  2. .fai file
-  3. .dict file
+  - .fasta file
+  - .fai file
+  - .dict file
 
 3. Annotation file: .gtf format
 
