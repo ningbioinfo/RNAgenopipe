@@ -18,7 +18,6 @@ module load AdapterRemoval
 module load STAR
 module load picard/2.2.4-Java-1.8.0_71
 module load Subread
-module load R/3.4.2-foss-2016b
 module load GATK
 module load Python/3.6.1-foss-2016b
 
@@ -28,21 +27,20 @@ module load Python/3.6.1-foss-2016b
 ##--------------------------------------------------------------------------------------------##
 
 ## required directories and files
-MAPREF=/fast/users/a1692215/RNA-seq_Montgomery/Ref/STAR_index #mapping index
-SCRIPTS=/fast/users/a1692215/RNA-seq_Montgomery/
+REF=/fast/users/a1692215/RNA-eqtl/Ref/human_g1k_v37.fasta
+MAPREF=/fast/users/a1692215/RNA-eqtl/Ref/STAR_index #mapping index
+SCRIPTS=/fast/users/a1692215/RNA-eqtl/
 
 
 ## Dirctories to make
-OUTPUT=/fast/users/a1692215/RNA-seq_Montgomery/Output
+OUTPUT=/fast/users/a1692215/RNA-eqtl/Pipeline-output
 TRIMDATA=${OUTPUT}/Trimmed_data
 ALIGNDATA=${OUTPUT}/Mapping
 RGDATA=${OUTPUT}/AddOrReplaceReadGroups
 MDDATA=${OUTPUT}/MarkDuplicates
 SPDATA=${OUTPUT}/SplitNCigarReads
-EXPLEVEL=${OUTPUT}/after_mapping/featureCounts
-RNA_METRICS=${OUTPUT}/CollectRnaSeqMetrics
-IS_METRICS=${OUTPUT}/CollectInsertSizeMetrics
-FASTQC1=${OUTPUT}/Raw_fastqc
+EXPLEVEL=${OUTPUT}/featureCounts
+#FASTQC1=${OUTPUT}/Raw_fastqc
 FASTQC2=${TRIMDATA}/Trim_fastqc
 GENOTYPING=${OUTPUT}/HaplotypeCaller
 VARFILTER=${OUTPUT}/VariantFiltration
@@ -51,7 +49,7 @@ ASEREADCOUNTER=${OUTPUT}/ASEReadCounter
 
 ## make array of directories to make
 declare -a arr=(${OUTPUT} ${TRIMDATA} ${ALIGNDATA} ${RGDATA} ${MDDATA} ${SPDATA} \
-                ${EXPLEVEL} ${RNA_METRICS} ${IS_METRICS} ${FASTQC1} ${FASTQC2}\
+                ${EXPLEVEL} ${FASTQC2}\
                 ${GENOTYPING} ${VARFILTER} ${VAREVAL} ${ASEREADCOUNTER})
 
 ## Additional python scripts
@@ -76,10 +74,8 @@ for DIRECTORY in "${arr[@]}"
 ##--------------------------------------------------------------------------------------------##
 
 DATA=$1 #Run each sample in parallel, *** use _1 as input ***
-REF=/fast/users/a1692215/RNA-seq_Montgomery/Ref/Homo_sapiens_assembly38.fasta
-Annotation_gtf=fast/users/a1692215/RNA-seq_Montgomery/Ref/hg38_annotation.gtf
-xenoRefFlat=fast/users/a1692215/RNA-seq_Montgomery/Ref/hg38_xenoRefFlat.txt
-DBSNP=/fast/users/a1692215/RNA-seq_Montgomery/Ref/Homo_sapiens_assembly38.dbsnp138.vcf
+Annotation_gtf=fast/users/a1692215/RNA-eqtl/Ref/gencode.v27lift37.annotation.gtf
+DBSNP=/fast/users/a1692215/RNA-eqtl/Ref/dbsnp_138.b37.vcf
 NAME=$(basename ${DATA} _1.fastq.gz) # change the suffix if needed
 
 
@@ -103,8 +99,8 @@ GATK=$EBROOTGATK/GenomeAnalysisTK.jar
 ##--------------------------------------------------------------------------------------------##
 
 
-fastqc -t 16 -f fastq -o ${FASTQC1} ${DATA}
-fastqc -t 16 -f fastq -o ${FASTQC1} ${DATA/_1/_2}
+#fastqc -t 16 -f fastq -o ${FASTQC1} ${DATA}
+#fastqc -t 16 -f fastq -o ${FASTQC1} ${DATA/_1/_2}
 
 
 ##--------------------------------------------------------------------------------------------##
@@ -117,14 +113,13 @@ AdapterRemoval --file1 ${DATA} --file2 ${DATA/_1/_2} \
     --trimqualities \
     --collapse \
     --threads 16 \
-    #--qualitymax 93 \ #sometimes is needed, if found 0b sample in ${TRIMDATA}
     --gzip
 
 ## QC again
 
 
-fastqc -t 16 -f fastq -o ${FASTQC2} ${DATA}
-fastqc -t 16 -f fastq -o ${FASTQC2} ${DATA/_1/_2}
+#fastqc -t 16 -f fastq -o ${FASTQC2} ${TRIMDATA}/${NAME}.pair1.truncated.gz
+#fastqc -t 16 -f fastq -o ${FASTQC2} ${TRIMDATA}/${NAME}.pair2.truncated.gz
 
 
 
@@ -133,14 +128,15 @@ fastqc -t 16 -f fastq -o ${FASTQC2} ${DATA/_1/_2}
 ##--------------------------------------------------------------------------------------------##
 
 
-STAR --outFileNamePrefix ${ALIGNDATA}/${NAME} \
-		--readFilesIn ${TRIMDATA}/{NAME}.pair1.truncated.gz ${TRIMDATA}/{NAME}.pair2.truncated.gz \
+STAR --outFileNamePrefix ${ALIGNDATA}/${NAME}_ \
+		--readFilesIn ${TRIMDATA}/${NAME}.pair1.truncated.gz ${TRIMDATA}/${NAME}.pair2.truncated.gz \
 		--readFilesCommand zcat \
 		--genomeDir ${MAPREF} \
 		--runThreadN 16 \
 		--outFilterMultimapNmax 5 \
 		--outFilterMismatchNmax 8 \
 		--outSAMunmapped Within \
+    --outSAMmapqUnique 60 \
 		--outSAMstrandField intronMotif \
 		--outSAMtype BAM SortedByCoordinate
 
@@ -151,7 +147,7 @@ STAR --outFileNamePrefix ${ALIGNDATA}/${NAME} \
 ##--------------------------------------------------------------------------------------------##
 
 java -jar ${PICARD} AddOrReplaceReadGroups \
-   I=${ALIGNDATA}/${NAME}.Aligned.sortedByCoord.out.bam \
+   I=${ALIGNDATA}/${NAME}_Aligned.sortedByCoord.out.bam \
    O=${RGDATA}/${NAME}.rg.bam \
    SO=coordinate RGID=${NAME} RGLB=${NAME} RGPL=Illumina RGPU=GenomeAnalyzerII RGSM=${NAME}
 
@@ -168,11 +164,9 @@ java -jar ${PICARD} MarkDuplicates \
 ## SplitNCigarReads
 ##--------------------------------------------------------------------------------------------##
 
-java -jar ${GATK} -T SplitNCigarReads \
+gatk SplitNCigarReads \
    -R ${REF} -I ${MDDATA}/${NAME}.markdup.bam \
-   -o ${SPDATA}/${NAME}.markdup.split.bam -rf ReassignOneMappingQuality \
-   -RMQF 255 -RMQT 60 -U ALLOW_N_CIGAR_READS
-
+   --output ${SPDATA}/${NAME}.markdup.split.bam
 
 ##--------------------------------------------------------------------------------------------##
 ## featureCounts
@@ -183,27 +177,6 @@ featureCounts -T 16 -t exon -g gene_id \
     -o ${EXPLEVEL}/${NAME}.counts.txt \
     ${SPDATA}/${NAME}.markdup.split.bam
 
-
-##--------------------------------------------------------------------------------------------##
-## CollectRnaSeqMetrics
-##--------------------------------------------------------------------------------------------##
-
-java -jar ${PICARD} CollectRnaSeqMetrics \
-		I=${SPDATA}/${NAME}.markdup.split.bam \
-		O=${RNA_METRICS}/${NAME}.RNA_Metrics \
-		REF_FLAT=${xenoRefFlat} \
-		STRAND=NONE
-
-
-##--------------------------------------------------------------------------------------------##
-## CollectInsertSizeMetrics
-##--------------------------------------------------------------------------------------------##
-
-java -jar ${PICARD} CollectInsertSizeMetrics \
-		I=${SPDATA}/${NAME}.markdup.split.bam \
-		O=${IS_METRICS}/${NAME}_isizes.txt \
-		H=${IS_METRICS}/${NAME}_isizes_histogram.pdf
-	done
 
 ################################################################################################
 ################################################################################################
@@ -218,39 +191,39 @@ java -jar ${PICARD} CollectInsertSizeMetrics \
 ## HaplotypeCaller
 ##--------------------------------------------------------------------------------------------##
 
-java -jar ${GATK} -T HaplotypeCaller \
+gatk HaplotypeCaller \
    -R ${REF} -I ${SPDATA}/${NAME}.markdup.split.bam \
-   -o ${GENOTYPING}/${NAME}.markdup.split.vcf.gz --dbsnp ${DBSNP} -dontUseSoftClippedBases \
-   -stand_call_conf 30 -nct 16
+   --output ${GENOTYPING}/${NAME}.markdup.split.vcf.gz --dbsnp ${DBSNP} --dont-use-soft-clipped-bases \
+   --standard-min-confidence-threshold-for-calling 30.0 -nct 16
 
 
 ##--------------------------------------------------------------------------------------------##
 ## VariantFiltration
 ##--------------------------------------------------------------------------------------------##
 
-java -jar ${GATK} -T VariantFiltration -R ${REF} \
+gatk VariantFiltration -R ${REF} \
    -V ${GENOTYPING}/${NAME}.markdup.split.vcf.gz \
    -window 35 -cluster 3 \
-   --filterExpression "FS > 30.0 || QD < 2.0"  -filterName "RNASeqFilters_FS_QD" \
-   --filterExpression "QUAL < 30.0 || MQ < 30.0 || DP < 10.0 "  -filterName "LowQualFilter" \
-   -o ${VARFILTER}/${NAME}.markdup.split.filtered.vcf.gz
+   --filter-expression "FS > 30.0 || QD < 2.0"  --filter-name "RNASeqFilters_FS_QD" \
+   --filter-expression "QUAL < 30.0 || MQ < 30.0 || DP < 10.0 "  --filter-name "LowQualFilter" \
+   --output ${VARFILTER}/${NAME}.markdup.split.filtered.vcf.gz
 
 
 ##--------------------------------------------------------------------------------------------##
 ## VariantEval
 ##--------------------------------------------------------------------------------------------##
 
-java -jar ${GATK} -T VariantEval -R ${REF} \
-   -eval ${VARFILTER}/${NAME}.markdup.split.filtered.vcf.gz -D ${DBSNP} \
-   -noEV -EV CompOverlap -EV IndelSummary -EV TiTvVariantEvaluator -EV CountVariants \
-   -EV MultiallelicSummary -o ${VAREVAL}/${NAME}.markdup.split.filtered.vcf.eval.grp
+#gatk VariantEval -R ${REF} \
+#   -eval ${VARFILTER}/${NAME}.markdup.split.filtered.vcf.gz -D ${DBSNP} \
+#   -noEV -EV CompOverlap -EV IndelSummary -EV TiTvVariantEvaluator -EV CountVariants \
+#   -EV MultiallelicSummary --output ${VAREVAL}/${NAME}.markdup.split.filtered.vcf.eval.grp
 
 ##--------------------------------------------------------------------------------------------##
 ## ASEReadCounter
 ##--------------------------------------------------------------------------------------------##
 
-java -jar ${GATK} -T ASEReadCounter -R ${REF} \
-   -o ${ASEREADCOUNTER}/${NAME}.ASE.csv \
+gatk ASEReadCounter -R ${REF} \
+   --output ${ASEREADCOUNTER}/${NAME}.ASE.csv \
    -I ${MDDATA}/${NAME}.markdup.bam \
-   -sites ${VARFILTER}/${NAME}.markdup.split.filtered.vcf.gz -U ALLOW_N_CIGAR_READS \
-   -minDepth 10 --minMappingQuality 10 --minBaseQuality 2 -drf DuplicateRead
+   --variant ${VARFILTER}/${NAME}.markdup.split.filtered.vcf.gz \
+   -min-depth 10 --min-mapping-quality 10 --min-base-quality 2 --disable-read-filter NotDuplicateReadFilter
