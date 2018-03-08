@@ -89,6 +89,23 @@ module load Python/3.6.1-foss-2016b
 
 2. To see the manual and run the script properly, see `python RNA-seq-pipeline.py -h`
 
+# Input of the pipeline
+
+1. RNA-seq fastq file (preferred name : `*_R1.fastq.gz` or `*_1.fastq.gz`)
+2. Reference genome, including:
+
+  1. .fasta file
+  2. .fai file
+  3. .dict file
+
+3. Annotation file: .gtf format
+
+4. dbsnp file
+
+5. you can download `2` and `4` in the GATK resource bundle : ftp://ftp.broadinstitute.org/bundle/
+
+6. the annotation file can be downloaded at Gencode : <https://www.gencodegenes.org/>
+
 # Need to do
 
 1. The following phasing steps
