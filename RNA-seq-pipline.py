@@ -15,6 +15,7 @@ import logging
 
 
 
+
 ################################################################################################
 ################################################################################################
 ##--------------------------------------------------------------------------------------------##
@@ -22,19 +23,22 @@ import logging
 ##--------------------------------------------------------------------------------------------##
 ################################################################################################
 ################################################################################################
+'''
+Fastqc is sometimes funny in differenet platform so we don't implement it in the pipeline.
+'''
+
 
 ##--------------------------------------------------------------------------------------------##
 ## Fastqc
 ##--------------------------------------------------------------------------------------------##
 
-def fastqc(data,outdir):
-    commandline = 'fastqc -f fastq -o ' + outdir + ' -t ' + num_threads + ' ' + data ## space is key
-    commands = shlex.split(commandline)
-
-    process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    outlog, errlog = process.communicate()
-
-    logging.info(outlog.decode("utf-8"))
+#def fastqc(data,outdir):
+##    commands = shlex.split(commandline)
+#
+#    process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+#    outlog, errlog = process.communicate()
+#
+#    logging.info(outlog.decode("utf-8"))
 
 ##--------------------------------------------------------------------------------------------##
 ## Trimming sequencing adapters off raw data
@@ -219,13 +223,13 @@ RGDATA = OUTPUT+'/AddOrReplaceReadGroups'
 MDDATA = OUTPUT+'/MarkDuplicates'
 SPDATA = OUTPUT+'/SplitNCigarReads'
 EXPLEVEL = OUTPUT+'/featureCounts'
-FASTQC1 = OUTPUT+'/Raw_fastqc'
-FASTQC2 = TRIMDATA+'/Trim_fastqc'
+#FASTQC1 = OUTPUT+'/Raw_fastqc'
+#FASTQC2 = TRIMDATA+'/Trim_fastqc'
 GENOTYPING = OUTPUT+'/HaplotypeCaller'
 VARFILTER = OUTPUT+'/VariantFiltration'
 ASEREADCOUNTER = OUTPUT+'/ASEReadCounter'
 
-Dirlist = [OUTPUT, TRIMDATA, ALIGNDATA, RGDATA, MDDATA, SPDATA, EXPLEVEL, FASTQC1, FASTQC2, GENOTYPING, VARFILTER, ASEREADCOUNTER]
+Dirlist = [OUTPUT, TRIMDATA, ALIGNDATA, RGDATA, MDDATA, SPDATA, EXPLEVEL, GENOTYPING, VARFILTER, ASEREADCOUNTER]
 
 for directory in Dirlist:
     pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
@@ -270,32 +274,32 @@ num_threads = args['threads'] ## number of threads to run
 ################################################################################################
 ################################################################################################
 
-logging.basicConfig(format='%(asctime)s %(message)s', filename='RNAseq-pipeline.log', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s %(message)s', filename="\"name\"-RNAseq-pipeline.log", level=logging.INFO)
 
 ##--------------------------------------------------------------------------------------------##
 ## Fastqc on raw data
 ##--------------------------------------------------------------------------------------------##
-print('Starting to QC raw data')
+#print('Starting to QC raw data')
 
-fastqc(data1, FASTQC1)
-fastqc(data2, FASTQC1)
+#fastqc(data1, FASTQC1)
+#fastqc(data2, FASTQC1)
 
-print('Finished raw data QC, the results are in', FASTQC1)
+#print('Finished raw data QC, the results are in', FASTQC1)
 
 ##--------------------------------------------------------------------------------------------##
 ## Trimming sequencing adapters off raw data and fastqc on trimmed data
 ##--------------------------------------------------------------------------------------------##
-print('Starting to trim raw data and QC trimmed data')
+print('Starting to trim raw data')
 
 trimming(data1,data2,name,TRIMDATA)
 
 trimdata1 = glob.glob(TRIMDATA + '/' + name + '.pair1.truncated.gz')[0]
 trimdata2 = glob.glob(TRIMDATA + '/' + name + '.pair2.truncated.gz')[0]
 
-fastqc(trimdata1, FASTQC2)
-fastqc(trimdata2, FASTQC2)
+#fastqc(trimdata1, FASTQC2)
+#fastqc(trimdata2, FASTQC2)
 
-print('Finished trimming and trimmed data QC, so far so good, the results are in', TRIMDATA)
+print('Finished trimming, so far so good, the results are in', TRIMDATA)
 
 ##--------------------------------------------------------------------------------------------##
 ## Aligning trimmed data to reference genome
