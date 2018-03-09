@@ -250,11 +250,11 @@ for directory in Dirlist:
 data1 = args['data']
 
 if data1.endswith('_1.fastq.gz'):
-    name = data1.split('/')[-1].rstrip('_1.fastq.gz')
+    name = data1.split('/')[-1].rstrip('1.fastq.gz').rstrip('_')
     data2 = data1.rstrip(data1.split('/')[-1]) + name + '_2.fastq.gz'
 
 elif data1.endswith('_R1.fastq.gz'):
-    name = data1.split('/')[-1].rstrip('_R1.fastq.gz')
+    name = data1.split('/')[-1].rstrip('R1.fastq.gz').rstrip('_')
     data2 = data1.rstrip(data1.split('/')[-1]) + name + '_R2.fastq.gz'
 
 else:
