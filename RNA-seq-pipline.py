@@ -107,7 +107,7 @@ def splitncigar(data,ref,outdir,name,gatk):
 ##--------------------------------------------------------------------------------------------##
 
 def featurecount(annotation,outdir,name,data):
-    commandline = 'featureCounts -t exon -g gene_id -a ' + annotation + ' -o ' + outdir + '/' + name + '.counts.txt' + data + ' -T ' + num_threads
+    commandline = 'featureCounts -t exon -g gene_id -a ' + annotation + ' -o ' + outdir + '/' + name + '.counts.txt ' + data + ' -T ' + num_threads
 
     commands = shlex.split(commandline)
 
