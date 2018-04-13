@@ -68,6 +68,7 @@ module load STAR
 module load picard
 module load GATK
 module load Python/3.6.1-foss-2016b
+module load Subread
 ```
 
 # How to use the script
@@ -111,7 +112,6 @@ module load Python/3.6.1-foss-2016b
 1. A folder('Pipeline-output' is the name by default), including lots of folders
 2. A log file named after the sample name
 
-# Need to do
+## To do
 
-1. The following phasing steps
-2. The eqtl preparations
+- [ ] Give meaningful info to the Description column.
