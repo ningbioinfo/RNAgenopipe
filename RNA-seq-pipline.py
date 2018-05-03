@@ -391,7 +391,7 @@ print('Finished splitncigar, it is recommended in the best practise tho, the res
 ##--------------------------------------------------------------------------------------------##
 print('Starting to calculate expression level','\n')
 
-featurecount(annotation,EXPLEVEL,name,spdata)
+featurecount(annotation,EXPLEVEL,name,mddata)
 
 print('Finished calculate the expression level, featureCounts is better than htseq-count, the results are in', EXPLEVEL,'\n')
 
