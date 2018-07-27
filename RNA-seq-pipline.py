@@ -28,7 +28,7 @@ Fastqc is sometimes funny in differenet platform, so we don't implement it in th
 
 def fastqc(data,outdir):
 
-    commandline = 'fastqc '
+    commandline = 'fastqc -t ' + num_threads + ' -o ' + outdir + ' ' + data
     commands = shlex.split(commandline)
 
     process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
