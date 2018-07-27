@@ -1,5 +1,6 @@
 ## Author: Ning Liu
 ## Version: 0.1.0 beta
+## Version: 0.2.0 updating note: added fastqc and single-read mode.
 
 import sys
 import pathlib
@@ -37,8 +38,12 @@ Fastqc is sometimes funny in differenet platform, so we don't implement it in th
 ## Trimming sequencing adapters off raw data
 ##--------------------------------------------------------------------------------------------##
 
-def trimming(data1,data2,name,outdir):
-    commandline = 'AdapterRemoval --file1 ' + data1 + ' --file2 ' + data2 + ' --basename ' + TRIMDATA + '/' + name + ' --trimns --trimqualities --collapse --gzip --threads ' + num_threads
+def trimming(data1,data2,name,outdir,readmode):
+    if readmode == 'pair':
+        commandline = 'AdapterRemoval --file1 ' + data1 + ' --file2 ' + data2 + ' --basename ' + TRIMDATA + '/' + name + ' --trimns --trimqualities --collapse --gzip --threads ' + num_threads
+    elif readmode == 'single':
+        commandline = 'AdapterRemoval --file1 ' + data1 + ' --basename ' + TRIMDATA + '/' + name + ' --trimns --trimqualities --gzip --threads ' + num_threads
+
     commands = shlex.split(commandline)
 
     process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -199,16 +204,17 @@ def allelespecificexpression(bam,vcf,ref,outdir,name,gatk):
 
 parser = argparse.ArgumentParser(description='Pipeline for RNA-seq analysis',
                                  epilog='Ahhhhhhhhhh life')
-parser.add_argument('-data', nargs='?', help='path to raw sequencing data in fastq format and gzipped. Please enter the _1.fastq.gz')
-parser.add_argument('-annotation', nargs='?', help='path to annotation file in gtf format. Please download the right format from Gencode and unzip it')
-parser.add_argument('-out', default='Pipeline-output', help='The output directory, by default it is ./Pipeline-output')
-parser.add_argument('-ref', nargs='?', help='reference genome to use, please download from the GATK resource bundle, should including a .fasta file, a .fai file and a .dict file, please unzip them')
-parser.add_argument('-mapref', nargs='?', help='alignment index, please use STAR to make the index, should be generated from the -ref file')
-parser.add_argument('-genotypemode', default=1, help='by default, the genotype mode is on, meaning the script will require "-dbsnp" option to be specified, if you want to turn off this mode and just use this script to do simple RNA-seq analysis, speicify this option to anything but 1')
-parser.add_argument('-dbsnp', nargs='?', help='the dbsnp file download from GATK resource bundle, please unzip')
-parser.add_argument('-picard', nargs='?', help='where is the picard.jar')
-parser.add_argument('-GATK', default='gatk', help='If you have executable gatk globally, levave it as default, otherwise please specify the code to execute gatk (e.g. "path/to/gatk")')
-parser.add_argument('-threads', default='16', help='the number of threads to run the pipeline, default is 16')
+parser.add_argument('--data', nargs='?', help='path to raw sequencing data in fastq format and gzipped. Please enter the _1.fastq.gz')
+parser.add_argument('--annotation', nargs='?', help='path to annotation file in gtf format. Please download the right format from Gencode and unzip it')
+parser.add_argument('--out', default='Pipeline-output', help='The output directory, by default it is ./Pipeline-output')
+parser.add_argument('--ref', nargs='?', help='reference genome to use, please download from the GATK resource bundle, should including a .fasta file, a .fai file and a .dict file, please unzip them')
+parser.add_argument('--mapref', nargs='?', help='alignment index, please use STAR to make the index, should be generated from the -ref file')
+parser.add_argument('--genotypemode', default=1, help='by default, the genotype mode is on, meaning the script will require "-dbsnp" option to be specified, if you want to turn off this mode and just use this script to do simple RNA-seq analysis, speicify this option to anything but 1')
+parser.add_argument('--dbsnp', nargs='?', help='the dbsnp file download from GATK resource bundle, please unzip')
+parser.add_argument('--picard', nargs='?', help='where is the picard.jar')
+parser.add_argument('--GATK', default='gatk', help='If you have executable gatk globally, levave it as default, otherwise please specify the code to execute gatk (e.g. "path/to/gatk")')
+parser.add_argument('--threads', default='16', help='the number of threads to run the pipeline, default is 16')
+parser.add_argument('--single', default='0', help='by default, the pipeline assume the input data is paired-end squencing reads, to analyse single-end reads, set this parameter to 1')
 
 
 
@@ -249,13 +255,17 @@ for directory in Dirlist:
 
 data1 = args['data']
 
-if data1.endswith('_1.fastq.gz'):
+if args['single'] == '0' and data1.endswith('_1.fastq.gz'):
     name = data1.split('/')[-1].rstrip('1.fastq.gz').rstrip('_')
     data2 = data1.rstrip(data1.split('/')[-1]) + name + '_2.fastq.gz'
 
-elif data1.endswith('_R1.fastq.gz'):
+elif args['single'] == '0' and data1.endswith('_R1.fastq.gz'):
     name = data1.split('/')[-1].rstrip('R1.fastq.gz').rstrip('_')
     data2 = data1.rstrip(data1.split('/')[-1]) + name + '_R2.fastq.gz'
+
+elif args['single'] == '1':
+    name = data1.split('/')[-1].rstrip('.fastq.gz')
+    data2 = ''
 
 else:
     print('Please use the standard file name of raw data (e.g. either *_R1.fastq.gz or *_1.fastq.gz)','\n')
@@ -328,10 +338,23 @@ logging.basicConfig(format='%(asctime)s %(message)s', filename='%s-RNAseq-pipeli
 ##--------------------------------------------------------------------------------------------##
 print('Starting to trim raw data','\n')
 
-trimming(data1,data2,name,TRIMDATA)
+# reads are paired-end or single-end?? User do something
+if args['single'] == '0':
+    readmode = 'pair'
+    print('Your reads are paired-end reads.')
+elif args['single'] == '1':
+    readmode = 'single'
+    print('Your reads are single-end reads.')
 
-trimdata1 = glob.glob(TRIMDATA + '/' + name + '.pair1.truncated.gz')[0]
-trimdata2 = glob.glob(TRIMDATA + '/' + name + '.pair2.truncated.gz')[0]
+trimming(data1,data2,name,TRIMDATA,readmode)
+
+if args['single'] == '0':
+    trimdata1 = glob.glob(TRIMDATA + '/' + name + '.pair1.truncated.gz')[0]
+    trimdata2 = glob.glob(TRIMDATA + '/' + name + '.pair2.truncated.gz')[0]
+
+elif args['single'] == '1':
+    trimdata1 = glob.glob(TRIMDATA + '/' + name + '.truncated.gz')[0]
+    trimdata2 = ''
 
 #fastqc(trimdata1, FASTQC2)
 #fastqc(trimdata2, FASTQC2)
@@ -342,7 +365,7 @@ print('Finished trimming, so far so good, the results are in', TRIMDATA,'\n')
 ## Aligning trimmed data to reference genome
 ##--------------------------------------------------------------------------------------------##
 
-print('Starting to alignment','\n')
+print('Starting to align','\n')
 
 star(trimdata1,trimdata2,ALIGNDATA + '/' + name + '_',mapref)
 
