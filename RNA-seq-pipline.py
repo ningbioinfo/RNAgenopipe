@@ -26,13 +26,15 @@ Fastqc is sometimes funny in differenet platform, so we don't implement it in th
 ## Fastqc
 ##--------------------------------------------------------------------------------------------##
 
-#def fastqc(data,outdir):
-##    commands = shlex.split(commandline)
-#
-#    process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-#    outlog, errlog = process.communicate()
-#
-#    logging.info(outlog.decode("utf-8"))
+def fastqc(data,outdir):
+
+    commandline = 'fastqc '
+    commands = shlex.split(commandline)
+
+    process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    outlog, errlog = process.communicate()
+
+    logging.info(outlog.decode("utf-8"))
 
 ##--------------------------------------------------------------------------------------------##
 ## Trimming sequencing adapters off raw data
@@ -237,8 +239,8 @@ RGDATA = OUTPUT+'/AddOrReplaceReadGroups'
 MDDATA = OUTPUT+'/MarkDuplicates'
 SPDATA = OUTPUT+'/SplitNCigarReads'
 EXPLEVEL = OUTPUT+'/featureCounts'
-#FASTQC1 = OUTPUT+'/Raw_fastqc'
-#FASTQC2 = TRIMDATA+'/Trim_fastqc'
+FASTQC1 = OUTPUT+'/Raw_fastqc'
+FASTQC2 = TRIMDATA+'/Trim_fastqc'
 GENOTYPING = OUTPUT+'/HaplotypeCaller'
 VARFILTER = OUTPUT+'/VariantFiltration'
 ASEREADCOUNTER = OUTPUT+'/ASEReadCounter'
@@ -326,10 +328,13 @@ logging.basicConfig(format='%(asctime)s %(message)s', filename='%s-RNAseq-pipeli
 ##--------------------------------------------------------------------------------------------##
 ## Fastqc on raw data
 ##--------------------------------------------------------------------------------------------##
-#print('Starting to QC raw data')
+print('Starting to QC raw data')
+if args['single'] == '0':
+    fastqc(data1, FASTQC1)
+    fastqc(data2, FASTQC1)
+elif args['single'] == '1':
+    fastqc(data1, FASTQC1)
 
-#fastqc(data1, FASTQC1)
-#fastqc(data2, FASTQC1)
 
 #print('Finished raw data QC, the results are in', FASTQC1)
 
@@ -348,16 +353,20 @@ elif args['single'] == '1':
 
 trimming(data1,data2,name,TRIMDATA,readmode)
 
+# fastqc on the trimmed data
 if args['single'] == '0':
     trimdata1 = glob.glob(TRIMDATA + '/' + name + '.pair1.truncated.gz')[0]
     trimdata2 = glob.glob(TRIMDATA + '/' + name + '.pair2.truncated.gz')[0]
+    fastqc(trimdata1, FASTQC2)
+    fastqc(trimdata2, FASTQC2)
 
 elif args['single'] == '1':
     trimdata1 = glob.glob(TRIMDATA + '/' + name + '.truncated.gz')[0]
     trimdata2 = ''
+    fastqc(trimdata1, FASTQC2)
 
-#fastqc(trimdata1, FASTQC2)
-#fastqc(trimdata2, FASTQC2)
+
+
 
 print('Finished trimming, so far so good, the results are in', TRIMDATA,'\n')
 
