@@ -69,6 +69,7 @@ module load picard
 module load GATK
 module load Python/3.6.1-foss-2016b
 module load Subread
+module load fastqc
 ```
 
 # How to use the script
