@@ -206,7 +206,7 @@ def allelespecificexpression(bam,vcf,ref,outdir,name,gatk):
 
 parser = argparse.ArgumentParser(description='Pipeline for RNA-seq analysis',
                                  epilog='Ahhhhhhhhhh life')
-parser.add_argument('--data', nargs='?', help='path to raw sequencing data in fastq format and gzipped. Please enter the _1.fastq.gz')
+parser.add_argument('--data', nargs='?', help='path to raw sequencing data in fastq format and gzipped. Please enter the _1.fastq.gz or _R1.fastq.gz, if you have single-end data, please specify "--single" to 1')
 parser.add_argument('--annotation', nargs='?', help='path to annotation file in gtf format. Please download the right format from Gencode and unzip it')
 parser.add_argument('--out', default='Pipeline-output', help='The output directory, by default it is ./Pipeline-output')
 parser.add_argument('--ref', nargs='?', help='reference genome to use, please download from the GATK resource bundle, should including a .fasta file, a .fai file and a .dict file, please unzip them')
@@ -245,7 +245,7 @@ GENOTYPING = OUTPUT+'/HaplotypeCaller'
 VARFILTER = OUTPUT+'/VariantFiltration'
 ASEREADCOUNTER = OUTPUT+'/ASEReadCounter'
 
-Dirlist = [OUTPUT, TRIMDATA, ALIGNDATA, RGDATA, MDDATA, SPDATA, EXPLEVEL, GENOTYPING, VARFILTER, ASEREADCOUNTER]
+Dirlist = [OUTPUT, TRIMDATA, ALIGNDATA, RGDATA, MDDATA, SPDATA, EXPLEVEL, GENOTYPING, VARFILTER, ASEREADCOUNTER, FASTQC1, FASTQC2]
 
 for directory in Dirlist:
     pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
@@ -336,7 +336,7 @@ elif args['single'] == '1':
     fastqc(data1, FASTQC1)
 
 
-#print('Finished raw data QC, the results are in', FASTQC1)
+print('Finished raw data QC, the results are in', FASTQC1)
 
 ##--------------------------------------------------------------------------------------------##
 ## Trimming sequencing adapters off raw data and fastqc on trimmed data
